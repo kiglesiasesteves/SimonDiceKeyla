@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,9 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.simondice.ui.theme.SimonDiceTheme
+import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.Color as ComposeColor
 
 
@@ -34,21 +37,36 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
+}@Composable
 fun SimonGameScreen() {
     var sequence by remember { mutableStateOf(CreateSequenceGame()) }
     var sequenceUser by remember { mutableStateOf(mutableListOf<SimonColor>()) }
     var feedbackMessage by remember { mutableStateOf("") }
     val record = remember { Record(0) }
+    var currentSequenceIndex by remember { mutableStateOf(-1) }
+    var showSequence by remember { mutableStateOf(false) }
+    var isSequenceActive by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showSequence) {
+        if (showSequence) {
+            for (index in sequence.indices) {
+                currentSequenceIndex = index
+                delay(1000)
+            }
+            currentSequenceIndex = -1
+            sequenceUser.clear()
+            showSequence = false
+            isSequenceActive = false
+        }
+    }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize()
+            .background(Color(236, 236, 221)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        SimonButtons(sequenceUser) { color ->
+        SimonButtons(sequence, sequenceUser, currentSequenceIndex, isSequenceActive) { color ->
             sequenceUser.add(color)
             Log.d("Secuencia Usuario", "Esta es la secuencia: ${sequenceUser.joinToString(", ") { it.value.toString() }}")
 
@@ -58,6 +76,8 @@ fun SimonGameScreen() {
                     Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
                     sequence = CreateSequenceGame()
                     sequenceUser.clear()
+                    showSequence = true
+                    isSequenceActive = true
                 }
             } else {
                 feedbackMessage = "Incorrecto. Reiniciando."
@@ -70,6 +90,8 @@ fun SimonGameScreen() {
             sequenceUser.clear()
             feedbackMessage = ""
             Log.d("Juego", "Nueva secuencia: ${sequence.joinToString(", ") { it.value.toString() }}")
+            showSequence = true
+            isSequenceActive = true
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -86,7 +108,7 @@ fun SimonGameScreen() {
 }
 
 @Composable
-fun SimonButtons(sequenceUser: List<SimonColor>, onColorClick: (SimonColor) -> Unit) {
+fun SimonButtons(sequence: List<SimonColor>, sequenceUser: List<SimonColor>, currentSequenceIndex: Int, isSequenceActive: Boolean, onColorClick: (SimonColor) -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -95,9 +117,15 @@ fun SimonButtons(sequenceUser: List<SimonColor>, onColorClick: (SimonColor) -> U
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ColorButton(color = SimonColor.Red, onClick = { onColorClick(SimonColor.Red) })
+            ColorButton(
+                imageResId = if (isSequenceActive && currentSequenceIndex == 0) R.drawable.brosa1iluminado else R.drawable.brosa1,
+                onClick = { onColorClick(SimonColor.Red) }
+            )
             Spacer(modifier = Modifier.width(16.dp))
-            ColorButton(color = SimonColor.Blue, onClick = { onColorClick(SimonColor.Blue) })
+            ColorButton(
+                imageResId = if (isSequenceActive && currentSequenceIndex == 1) R.drawable.bazul2iluminado else R.drawable.bazul2,
+                onClick = { onColorClick(SimonColor.Blue) }
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -105,19 +133,27 @@ fun SimonButtons(sequenceUser: List<SimonColor>, onColorClick: (SimonColor) -> U
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ColorButton(color = SimonColor.Yellow, onClick = { onColorClick(SimonColor.Yellow) })
+            ColorButton(
+                imageResId = if (isSequenceActive && currentSequenceIndex == 2) R.drawable.bamarillo3iluminado else R.drawable.bamarillo3,
+                onClick = { onColorClick(SimonColor.Yellow) }
+            )
             Spacer(modifier = Modifier.width(16.dp))
-            ColorButton(color = SimonColor.Green, onClick = { onColorClick(SimonColor.Green) })
+            ColorButton(
+                imageResId = if (isSequenceActive && currentSequenceIndex == 3) R.drawable.bverde4iluminado else R.drawable.bverde4,
+                onClick = { onColorClick(SimonColor.Green) }
+            )
         }
     }
 }
 
+
 @Composable
-fun ColorButton(color: SimonColor, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
+fun ColorButton(imageResId: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(id = imageResId),
+        contentDescription = null,
         modifier = modifier
             .size(150.dp)
-            .background(mapEnumColorToComposeColor(color), shape = CircleShape)
             .clickable { onClick() }
     )
 }
