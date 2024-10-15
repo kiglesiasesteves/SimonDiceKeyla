@@ -1,7 +1,7 @@
 package com.example.simondice
 
+import AppDatabase
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,21 +21,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.simondice.ui.theme.SimonDiceTheme
 import kotlinx.coroutines.delay
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
+    private lateinit var db: AppDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        db = AppDatabase.getDatabase(this)
+        // Habilitar el modo edge-to-edge
         enableEdgeToEdge()
+
+        // Recibir el nombre de usuario desde LoginActivity
+        val userName = intent.getStringExtra("userName") // Puede ser null si no se pasa
+
         setContent {
             SimonDiceTheme {
-                SimonGameScreen(Record(0))
+                // Pasar el nombre de usuario a SimonGameScreen
+                SimonGameScreen(Record(0), userName)
             }
         }
     }
 }
 
 @Composable
-fun SimonGameScreen(record: Record) {
+fun SimonGameScreen(record: Record, userName: String?) {
     var sequence by remember { mutableStateOf(CreateSequenceGame()) }
     var sequenceUser by remember { mutableStateOf(mutableListOf<SimonColor>()) }
     var feedbackMessage by remember { mutableStateOf("") }
@@ -67,14 +77,20 @@ fun SimonGameScreen(record: Record) {
         ) {
             Spacer(modifier = Modifier.height(50.dp))
 
+            // Mostrar el nombre de usuario
+            Text(
+                text = "Jugador: ${userName ?: "Jugador no identificado"}",
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             SimonButtons(sequence, currentSequenceIndex) { color ->
                 sequenceUser.add(color)
-                Log.d("Secuencia Usuario", "Esta es la secuencia: ${sequenceUser.joinToString(", ") { it.value.toString() }}")
 
                 if (CompararSecuenciaUsuario(sequence, sequenceUser)) {
                     feedbackMessage = "Correcto!"
                     if (sequenceUser.size == sequence.size) {
-                        Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
                         sequence = CreateSequenceGame()
                         sequenceUser.clear()
                         isSequenceActive = true
@@ -91,14 +107,14 @@ fun SimonGameScreen(record: Record) {
                 sequence = CreateSequenceGame()
                 sequenceUser.clear()
                 feedbackMessage = ""
-                Log.d("Juego", "Nueva secuencia: ${sequence.joinToString(", ") { it.value.toString() }}")
                 isSequenceActive = true
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             PuntuactionButton {
-                Log.d("Puntuación", "Nueva puntuación: ${record.record}") // Mostrar la puntuación
+                // Aquí puedes gestionar la puntuación si es necesario
+                Log.d("Puntuación", "Puntuación actual: ${record.record}")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -205,14 +221,6 @@ fun PuntuactionButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SimonDiceTheme {
-        SimonGameScreen(Record(0))
-    }
-}
-
 fun CreateSequenceGame(): List<SimonColor> {
     return List(4) { SimonColor.values().random() }.also {
         Log.i("Secuencia", "Secuencia: ${it.joinToString(", ") { it.value.toString() }}")
@@ -229,4 +237,10 @@ fun CompararSecuenciaUsuario(sequence: List<SimonColor>, sequenceUser: List<Simo
     return true
 }
 
-
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    SimonDiceTheme {
+        SimonGameScreen(Record(0), "Jugador de Prueba")
+    }
+}
