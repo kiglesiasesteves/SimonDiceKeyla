@@ -2,6 +2,7 @@ package com.example.simondice
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,11 +38,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SimonGameScreen(record: Record) {
-    var sequence by remember { mutableStateOf(CreateSequenceGame()) }
+    var sequence by remember { mutableStateOf(SimonDiceJuego().CreateSequenceGame()) }
     var sequenceUser by remember { mutableStateOf(mutableListOf<SimonColor>()) }
     var feedbackMessage by remember { mutableStateOf("") }
     var currentSequenceIndex by remember { mutableStateOf(-1) }
     var isSequenceActive by remember { mutableStateOf(false) }
+    val aContext= LocalContext.current
 
     LaunchedEffect(isSequenceActive) {
         if (isSequenceActive) {
@@ -71,15 +74,21 @@ fun SimonGameScreen(record: Record) {
                 sequenceUser.add(color)
                 Log.d("Secuencia Usuario", "Esta es la secuencia: ${sequenceUser.joinToString(", ") { it.value.toString() }}")
 
-                if (CompararSecuenciaUsuario(sequence, sequenceUser)) {
+                if (SimonDiceJuego().CompararSecuenciaUsuario(sequence, sequenceUser)) {
                     feedbackMessage = "Correcto!"
                     if (sequenceUser.size == sequence.size) {
                         Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
-                        sequence = CreateSequenceGame()
+                        val text="WIN"
+                        val toast = Toast.makeText( aContext, text, Toast.LENGTH_SHORT)
+                        toast.show()
+                        sequence = SimonDiceJuego().CreateSequenceGame()
                         sequenceUser.clear()
                         isSequenceActive = true
                     }
                 } else {
+                    val text= "Game Over"
+                    val toast = Toast.makeText(aContext, text, Toast.LENGTH_SHORT)
+                    toast.show()
                     feedbackMessage = "Incorrecto. Vuelve a Empezar."
                     sequenceUser.clear()
                 }
@@ -88,7 +97,7 @@ fun SimonGameScreen(record: Record) {
             Spacer(modifier = Modifier.height(32.dp))
 
             StartButton(modifier = Modifier.padding(top = 16.dp)) {
-                sequence = CreateSequenceGame()
+                sequence = SimonDiceJuego().CreateSequenceGame()
                 sequenceUser.clear()
                 feedbackMessage = ""
                 Log.d("Juego", "Nueva secuencia: ${sequence.joinToString(", ") { it.value.toString() }}")
@@ -98,7 +107,7 @@ fun SimonGameScreen(record: Record) {
             Spacer(modifier = Modifier.height(32.dp))
 
             PuntuactionButton {
-                Log.d("Puntuación", "Nueva puntuación: ${record.record}") // Mostrar la puntuación
+                Log.d("Puntuación", "Nueva puntuación: ${record.record}")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -139,7 +148,6 @@ fun SimonButtons(sequence: List<SimonColor>, currentSequenceIndex: Int, onColorC
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-
         Row(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -213,20 +221,6 @@ fun GreetingPreview() {
     }
 }
 
-fun CreateSequenceGame(): List<SimonColor> {
-    return List(4) { SimonColor.values().random() }.also {
-        Log.i("Secuencia", "Secuencia: ${it.joinToString(", ") { it.value.toString() }}")
-    }
-}
 
-fun CompararSecuenciaUsuario(sequence: List<SimonColor>, sequenceUser: List<SimonColor>): Boolean {
-    for (i in sequenceUser.indices) {
-        if (sequenceUser[i] != sequence[i]) {
-            Log.d("Respuesta", "Incorrecto en posición ${i + 1}: ${sequenceUser[i]} != ${sequence[i]}")
-            return false
-        }
-    }
-    return true
-}
 
 
