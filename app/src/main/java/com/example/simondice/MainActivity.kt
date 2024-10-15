@@ -15,8 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.simondice.ui.theme.SimonDiceTheme
 import kotlinx.coroutines.delay
 
@@ -26,14 +28,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SimonDiceTheme {
-                SimonGameScreen()
+                SimonGameScreen(Record(0))
             }
         }
     }
 }
 
 @Composable
-fun SimonGameScreen() {
+fun SimonGameScreen(record: Record) {
     var sequence by remember { mutableStateOf(CreateSequenceGame()) }
     var sequenceUser by remember { mutableStateOf(mutableListOf<SimonColor>()) }
     var feedbackMessage by remember { mutableStateOf("") }
@@ -53,43 +55,66 @@ fun SimonGameScreen() {
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
             .background(Color(236, 236, 221)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center
     ) {
-        SimonButtons(sequence, currentSequenceIndex) { color ->
-            sequenceUser.add(color)
-            Log.d("Secuencia Usuario", "Esta es la secuencia: ${sequenceUser.joinToString(", ") { it.value.toString() }}")
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Spacer(modifier = Modifier.height(50.dp))
 
-            if (CompararSecuenciaUsuario(sequence, sequenceUser)) {
-                feedbackMessage = "Correcto!"
-                if (sequenceUser.size == sequence.size) {
-                    Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
-                    sequence = CreateSequenceGame()
+            SimonButtons(sequence, currentSequenceIndex) { color ->
+                sequenceUser.add(color)
+                Log.d("Secuencia Usuario", "Esta es la secuencia: ${sequenceUser.joinToString(", ") { it.value.toString() }}")
+
+                if (CompararSecuenciaUsuario(sequence, sequenceUser)) {
+                    feedbackMessage = "Correcto!"
+                    if (sequenceUser.size == sequence.size) {
+                        Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
+                        sequence = CreateSequenceGame()
+                        sequenceUser.clear()
+                        isSequenceActive = true
+                    }
+                } else {
+                    feedbackMessage = "Incorrecto. Vuelve a Empezar."
                     sequenceUser.clear()
-                    isSequenceActive = true
                 }
-            } else {
-                feedbackMessage = "Incorrecto. Vuelve a Empezar."
-                sequenceUser.clear()
             }
-        }
 
-        StartButton(modifier = Modifier.padding(top = 100.dp)) {
-            sequence = CreateSequenceGame()
-            sequenceUser.clear()
-            feedbackMessage = ""
-            Log.d("Juego", "Nueva secuencia: ${sequence.joinToString(", ") { it.value.toString() }}")
-            isSequenceActive = true
-        }
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = feedbackMessage,
-            style = MaterialTheme.typography.bodyLarge.copy(Color.Red)
-        )
+            StartButton(modifier = Modifier.padding(top = 16.dp)) {
+                sequence = CreateSequenceGame()
+                sequenceUser.clear()
+                feedbackMessage = ""
+                Log.d("Juego", "Nueva secuencia: ${sequence.joinToString(", ") { it.value.toString() }}")
+                isSequenceActive = true
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            PuntuactionButton {
+                Log.d("Puntuación", "Nueva puntuación: ${record.record}") // Mostrar la puntuación
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = feedbackMessage,
+                style = MaterialTheme.typography.bodyLarge.copy(Color.Red)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Aciertos: ${record.record}",
+                style = MaterialTheme.typography.bodyLarge.copy(Color.Black)
+            )
+        }
     }
 }
 
@@ -131,6 +156,7 @@ fun SimonButtons(sequence: List<SimonColor>, currentSequenceIndex: Int, onColorC
         }
     }
 }
+
 @Composable
 fun ColorButton(imageResId: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
@@ -157,12 +183,33 @@ fun StartButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
+@Composable
+fun PuntuactionButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.size(500.dp, 100.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFECECDD)),
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.bpuntuacion),
+                contentDescription = null,
+                modifier = Modifier.size(300.dp).align(Alignment.Center)
+            )
+            Text(
+                text = "Puntuación: ", fontFamily = FontFamily.Serif, fontSize = 20.sp,
+                style = MaterialTheme.typography.bodyLarge.copy(Color.Black),
+                modifier = Modifier.align(Alignment.Center).padding(end = 85.dp)
+            )
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     SimonDiceTheme {
-        SimonGameScreen()
+        SimonGameScreen(Record(0))
     }
 }
 
@@ -181,3 +228,5 @@ fun CompararSecuenciaUsuario(sequence: List<SimonColor>, sequenceUser: List<Simo
     }
     return true
 }
+
+
