@@ -1,5 +1,6 @@
 package com.example.simondice
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -36,12 +37,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@SuppressLint("MutableCollectionMutableState")
 @Composable
 fun SimonGameScreen(record: Record) {
     var sequence by remember { mutableStateOf(SimonDiceJuego().CreateSequenceGame()) }
-    var sequenceUser by remember { mutableStateOf(mutableListOf<SimonColor>()) }
+    val sequenceUser by remember { mutableStateOf(mutableListOf<SimonColor>()) }
     var feedbackMessage by remember { mutableStateOf("") }
-    var currentSequenceIndex by remember { mutableStateOf(-1) }
+    var currentSequenceIndex by remember { mutableIntStateOf(-1) }
     var isSequenceActive by remember { mutableStateOf(false) }
     val aContext= LocalContext.current
 
@@ -79,6 +81,7 @@ fun SimonGameScreen(record: Record) {
                     if (sequenceUser.size == sequence.size) {
                         Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
                         val text="WIN"
+                        record.incrementarRecord(record)
                         val toast = Toast.makeText( aContext, text, Toast.LENGTH_SHORT)
                         toast.show()
                         sequence = SimonDiceJuego().CreateSequenceGame()
