@@ -79,6 +79,7 @@ fun SimonGameScreen(record: Record) {
                     if (sequenceUser.size == sequence.size) {
                         Log.d("Juego", "¡Secuencia completa! Generando nueva secuencia.")
                         val text="WIN"
+                        record.incrementarRecord(record)
                         val toast = Toast.makeText( aContext, text, Toast.LENGTH_SHORT)
                         toast.show()
                         sequence = SimonDiceJuego().CreateSequenceGame()
