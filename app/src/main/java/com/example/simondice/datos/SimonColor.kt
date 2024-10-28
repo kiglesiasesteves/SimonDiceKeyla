@@ -1,4 +1,4 @@
-package com.example.simondice
+package com.example.simondice.datos
 
 enum class SimonColor(val value: Int) {
     Red(1),
